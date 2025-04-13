@@ -1,0 +1,16 @@
+{"radar": [
+    {
+        "posInicial"    : [600,0,180,0,27.778,0],
+        "PRF"           : 100,
+        "fs"            : 30.5e6,
+        "GananciaAnt"   : 6,
+        "FreqPortadora" : 10e9,
+        "AperturaAzimut": 14,
+        "AperturaElev"  : 50,
+        "Yaw"           : 180,
+        "InclElev"      : 20,
+        "Temperatura"   : 300,
+        "B"             : 60e6
+    }
+  ]
+  }

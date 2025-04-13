@@ -1,0 +1,15 @@
+{"system":[
+    {
+        "VelocidadeLuz": 3e8,
+        "IndiceMaximo":  400,
+        "NumeroPulsos":  2048,
+        "PlotarGrafico": true,
+        "xMin":          66,
+        "xMax":          490,
+        "yMin":          0,
+        "yMax":          500,
+        "discGrid":      1,
+        "ratioUp":       2
+    }
+]
+}
