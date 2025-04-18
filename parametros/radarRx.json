@@ -1,6 +1,7 @@
 {"radar": [
     {
         "posInicial"    : [600,0,180,0,27.778,0],
+        "tipoTrajetoria": "lineal",
         "PRF"           : 660,
         "fs"            : 50e6,
         "GananciaAnt"   : 6,

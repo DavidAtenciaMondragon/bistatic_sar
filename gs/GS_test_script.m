@@ -7,24 +7,28 @@ addpath(genpath(strcat('..',filesep,'tools')))
 
 % Parametros del transmisor
 
-radarJSON  = json2struct(strcat('..',filesep,'parametros',filesep,'radarTx.json'));
+radarJSON  = json2struct(strcat('..',filesep,'parametros',filesep,'radarTx_circular.json'));
 strRadarTx = radarJSON.radar; clear radarJSON;
 
 % Parametros del receptor
 
-radarJSON  = json2struct(strcat('..',filesep,'parametros',filesep,'radarRx.json'));
+radarJSON  = json2struct(strcat('..',filesep,'parametros',filesep,'radarRx_circular.json'));
 strRadarRx = radarJSON.radar; clear radarJSON;
 
 % Parametros del target
 
-targetJSON = json2struct(strcat('..',filesep,'parametros',filesep,'target.json'));
+targetJSON = json2struct(strcat('..',filesep,'parametros',filesep,'target_circular.json'));
 strTarget  = targetJSON.target; clear targetJSON;
 
 % Parametros do sistema
 
-systemJSON = json2struct(strcat('..',filesep,'parametros',filesep,'system.json'));
+systemJSON = json2struct(strcat('..',filesep,'parametros',filesep,'system_circular.json'));
 strSystem  = systemJSON.system; clear systemJSON;
 
+% Pre procesamiento parametros 
+
+strRadarTx = converterPosGrados2Rad(strRadarTx);
+strRadarRx = converterPosGrados2Rad(strRadarRx);
 
 % Parametros derivados
 
@@ -39,22 +43,12 @@ strRadarRx.lamb = strSystem.VelocidadeLuz/strRadarRx.FreqPortadora; % Compriment
 
 % Matriz de transição de estados
 
-F   = [1 0 0 strRadarTx.PRT 0 0; ...
-       0 1 0 0 strRadarTx.PRT 0; ...
-       0 0 1 0 0 strRadarTx.PRT; ...
-       0 0 0 1 0 0; ...
-       0 0 0 0 1 0; ...
-       0 0 0 0 0 1];
-
-H = [1 0 0 0 0 0; ...
-     0 1 0 0 0 0; ...
-     0 0 1 0 0 0];
+[F_tx,H_tx] = calculaMatrizTransicaoObservacao(strRadarTx);
+[F_rx,H_rx] = calculaMatrizTransicaoObservacao(strRadarRx);
 
 % --
 
 [strRadarTx, strRadarRx] = calculateCoverageBistatic(strRadarTx, strRadarRx);
-
-% Este comentario es importante
 
 % --
 
@@ -97,12 +91,15 @@ for i = 1:strSystem.NumeroPulsos
             estadosTx = strRadarTx.posInicial;
             estadosRx = strRadarRx.posInicial;
         else
-            estadosTx = F * estadosTx;
-            estadosRx = F * estadosRx;
+            estadosTx = F_tx * estadosTx;
+            estadosRx = F_tx * estadosRx;
         end
         
-        posRadarTx(:, i) = H*estadosTx;
-        posRadarRx(:, i) = H*estadosRx;
+        posRadarTx(:, i) = H_tx*estadosTx;
+        posRadarRx(:, i) = H_tx*estadosRx;
+        
+        posRadarTx(:, i) = convertCordinatesToCartesian(posRadarTx(:,i),strRadarTx.tipoTrajetoria);
+        posRadarRx(:, i) = convertCordinatesToCartesian(posRadarRx(:,i),strRadarRx.tipoTrajetoria);
         
         distTx = calculateDistIfAzim(posRadarTx(:, i),strTarget(j), strRadarTx);
         distRx = calculateDistIfAzim(posRadarRx(:, i),strTarget(j), strRadarRx);
@@ -158,9 +155,6 @@ grid on
 xlabel('x')
 ylabel('y')
 zlabel('z')
-xlim([0 1000])
-ylim([0 500])
-zlim([0 200])
 title('Radar trajectory')
 grid minor
 view(3)

@@ -1,0 +1,18 @@
+{"radar": [
+    {
+        "posInicial"    : [300,0,35,0.2],
+        "tipoTrajetoria": "circular",
+        "tipoCobertura" : "spotlight",
+        "PRF"           : 660,
+        "fs"            : 50e6,
+        "GananciaAnt"   : 6,
+        "FreqPortadora" : 10e9,
+        "AperturaAzimut": 14,
+        "AperturaElev"  : 50,
+        "Yaw"           : 180,
+        "InclElev"      : 20,
+        "Temperatura"   : 300,
+        "B"             : 60e6
+    }
+  ]
+  }
