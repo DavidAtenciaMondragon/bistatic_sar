@@ -1,13 +1,13 @@
 {"radar": [
     {
         "posInicial"    : [0,0,180,0,27.778,0],
-        "PRF"           : 100,
-        "fs"            : 30.5e6,
+        "PRF"           : 660,
+        "fs"            : 50e6,
         "PotenciaTx"    : 100e3,
         "GananciaAnt"   : 6,
         "FreqPortadora" : 10e9,
-        "FreqMenor"     : -15e6,
-        "FreqMayor"     : 15e6,
+        "FreqMenor"     : -25e6,
+        "FreqMayor"     : 25e6,
         "DuracaoPulso"  : 1.3e-6,
         "AperturaAzimut": 14,
         "AperturaElev"  : 50,

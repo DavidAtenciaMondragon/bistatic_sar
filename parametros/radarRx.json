@@ -1,8 +1,8 @@
 {"radar": [
     {
         "posInicial"    : [600,0,180,0,27.778,0],
-        "PRF"           : 100,
-        "fs"            : 30.5e6,
+        "PRF"           : 660,
+        "fs"            : 50e6,
         "GananciaAnt"   : 6,
         "FreqPortadora" : 10e9,
         "AperturaAzimut": 14,

@@ -23,18 +23,18 @@ strTarget  = targetJSON.target; clear targetJSON;
 % Parametros do sistema
 
 systemJSON = json2struct(strcat('..',filesep,'parametros',filesep,'system.json'));
-strSystem   = systemJSON.system; clear systemJSON;
+strSystem  = systemJSON.system; clear systemJSON;
 
 
 % Parametros derivados
 
 % Tx
-strRadarTx.PRT = 1/strRadarTx.PRF;
+strRadarTx.PRT  = 1/strRadarTx.PRF;
 strRadarTx.lamb = strSystem.VelocidadeLuz/strRadarTx.FreqPortadora; % Comprimento de onda
 strRadarTx.B    = strRadarTx.FreqMayor - strRadarTx.FreqMenor; % Banda do radar
 
 % Rx
-strRadarRx.PRT = 1/strRadarRx.PRF;
+strRadarRx.PRT  = 1/strRadarRx.PRF;
 strRadarRx.lamb = strSystem.VelocidadeLuz/strRadarRx.FreqPortadora; % Comprimento de onda
 
 % Matriz de transição de estados
@@ -141,7 +141,7 @@ end
 dados = dados + randn(size(dados))*potRuido(strRadarRx.Temperatura,strRadarRx.B);
 
 figure
-mesh(real(dados))
+mesh(abs(dados))
 xlabel('RangeBins')
 ylabel('Pulsos')
 title('Pulsos recebidos')

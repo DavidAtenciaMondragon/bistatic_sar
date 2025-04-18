@@ -4,10 +4,15 @@ close all
 
 addpath(genpath(strcat('..',filesep,'gs',filesep,'src')))
 
-% Radar parameters
+% Parametros del transmisor
 
-radarJSON = json2struct(strcat('..',filesep,'parametros',filesep,'radar.json'));
-strRadar  = radarJSON.radar; clear radarJSON;
+radarJSON  = json2struct(strcat('..',filesep,'parametros',filesep,'radarTx.json'));
+strRadarTx = radarJSON.radar; clear radarJSON;
+
+% Parametros del receptor
+
+radarJSON  = json2struct(strcat('..',filesep,'parametros',filesep,'radarRx.json'));
+strRadarRx = radarJSON.radar; clear radarJSON;
 
 % System parameters
 
@@ -17,11 +22,12 @@ strSystem   = systemJSON.system; clear systemJSON;
 % Load data 
 
 load(strcat('..',filesep,'gs',filesep,'data',filesep,'dados.mat'));
-load(strcat('..',filesep,'gs',filesep,'data',filesep,'posRadar.mat'));
+load(strcat('..',filesep,'gs',filesep,'data',filesep,'posRadarTx.mat'));
+load(strcat('..',filesep,'gs',filesep,'data',filesep,'posRadarRx.mat'));
 
 % Ideal CHIRP 
 
-chirp   = createCHRIP(strRadar);
+chirp   = createCHRIP(strRadarTx);
 pulsoTx = zeros(1,strSystem.IndiceMaximo);
 
 pulsoTx(1:length(chirp)) = chirp;
@@ -56,7 +62,7 @@ ZZ = zeros(size(XX));
 
 % Calculate wavelength
 
-lambda = strSystem.VelocidadeLuz/strRadar.FreqPortadora;
+lambda = strSystem.VelocidadeLuz/strRadarTx.FreqPortadora;
 
 % Back Projection algorithm
 
@@ -74,13 +80,15 @@ for i = 1:size(output,1)
         end
 
         % Calculate slant range for every pixel
-        R = sqrt((XX(i,j)-posRadar(1,:)').^2 + (YY(i,j)-posRadar(2,:)').^2 + (ZZ(i,j)-posRadar(3,:)').^2);
+        R_Tx_Tg = sqrt((XX(i,j)-posRadarTx(1,:)').^2 + (YY(i,j)-posRadarTx(2,:)').^2 + (ZZ(i,j)-posRadarTx(3,:)').^2);
+        R_Tg_Rx = sqrt((XX(i,j)-posRadarRx(1,:)').^2 + (YY(i,j)-posRadarRx(2,:)').^2 + (ZZ(i,j)-posRadarRx(3,:)').^2);
+        R       = R_Tx_Tg + R_Tg_Rx;
 
         % Phase 
-        phi = (4*pi/lambda)*R;
+        phi = (2*pi/lambda)*R;
         
         % Calculate index 
-        index     = (2*R)/strSystem.VelocidadeLuz*(strRadar.fs*strSystem.ratioUp);
+        index     = (R)/strSystem.VelocidadeLuz*(strRadarRx.fs*strSystem.ratioUp);
         fracIndex = mod(index,1);
         
         indexPre = sub2ind(size(pulsoComp),(1:size(pulsoComp,1))',min(floor(index),size(pulsoComp,2)));
@@ -93,7 +101,12 @@ for i = 1:size(output,1)
     end
 end
 
+% Show output with labels (XX,YY)
 figure
-mesh(abs(output))
+mesh(XX,YY,abs(output))
 title('Back Projection')
+xlabel('X')
+ylabel('Y')
+zlabel('Amplitude')
+
 
