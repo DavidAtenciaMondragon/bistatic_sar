@@ -6,17 +6,17 @@ addpath(genpath(strcat('..',filesep,'gs',filesep,'src')))
 
 % Parametros del transmisor
 
-radarJSON  = json2struct(strcat('..',filesep,'parametros',filesep,'radarTx.json'));
+radarJSON  = json2struct(strcat('..',filesep,'parametros',filesep,'radarTx_circular.json'));
 strRadarTx = radarJSON.radar; clear radarJSON;
 
 % Parametros del receptor
 
-radarJSON  = json2struct(strcat('..',filesep,'parametros',filesep,'radarRx.json'));
+radarJSON  = json2struct(strcat('..',filesep,'parametros',filesep,'radarRx_circular.json'));
 strRadarRx = radarJSON.radar; clear radarJSON;
 
 % System parameters
 
-systemJSON = json2struct(strcat('..',filesep,'parametros',filesep,'system.json'));
+systemJSON = json2struct(strcat('..',filesep,'parametros',filesep,'system_circular.json'));
 strSystem   = systemJSON.system; clear systemJSON;
 
 % Load data 
@@ -37,6 +37,12 @@ pulsoTx(1:length(chirp)) = chirp;
 pulsoTxRep = repmat(conj(fft(pulsoTx)), [strSystem.NumeroPulsos,1]);
 pulsoComp  = ifft(fft(dados,strSystem.IndiceMaximo,2).*pulsoTxRep,strSystem.IndiceMaximo,2);
 
+figure
+mesh(abs(pulsoComp))
+title('Range compression')
+xlabel('Range')
+ylabel('Pulses')
+
 clear pulsoTxRep dados
 
 % Interpolate data 
@@ -44,12 +50,6 @@ clear pulsoTxRep dados
 [numPRT,numRange] = size(pulsoComp);
 
 pulsoComp = interpft(pulsoComp,numRange*strSystem.ratioUp,2);
-
-figure
-mesh(abs(pulsoComp))
-title('Range compression')
-xlabel('Range')
-ylabel('Pulses')
 
 % Create image sample grid (x,y)
 
@@ -109,4 +109,13 @@ xlabel('X')
 ylabel('Y')
 zlabel('Amplitude')
 
-
+% --- 8.4 Display Focused Image ---
+figure;
+imagesc(X, Y, 20*log10(abs(output)/max(abs(output(:))))); % Display in dB scale
+colormap('gray');
+colorbar;
+xlabel('X (m)');
+ylabel('Y (m)');
+title('Focused SAR Image (Bistatic Backprojection - dB Scale)');
+axis xy; % Set origin to bottom-left corner
+axis equal; axis tight;

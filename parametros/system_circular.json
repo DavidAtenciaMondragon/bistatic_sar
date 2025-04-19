@@ -2,8 +2,9 @@
     {
         "VelocidadeLuz": 3e8,
         "IndiceMaximo":  400,
-        "NumeroPulsos":  8000,
+        "NumeroPulsos":  10000,
         "PlotarGrafico": true,
+        "RefGeografico": [0,0,0],
         "xMin":          -150,
         "xMax":          150,
         "yMin":          -150,

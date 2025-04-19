@@ -1,14 +1,34 @@
-function dist = calculateDistIfAzim(posRadar,strTarget, strRadar)
+function dist = calculateDistIfAzim(posRadar,strTarget, strRadar, strSystem)
 
 dist = [];
 
-% Calcular azimute entre target e radarTx
-tmpAz = atan2d(strTarget.pos(2) - posRadar(2), strTarget.pos(1) - posRadar(1));
+switch strRadar.tipoCobertura
+    case 'stripmat'
+        Yaw = strRadar.Yaw;
+    case 'spotlight'
+        % Mover el centro de referencia a la posicion del radar
+        posRefAux = strSystem.RefGeografico - posRadar;
+        % Calcular azimuth y elevacion
+        [Yaw, Roll, ~] = cart2sph(posRefAux(1),posRefAux(2),posRefAux(3));
+        
+    otherwise
+        error('Tipo de cobertura não reconhecido')
+end
 
-anguloMinBusca = strRadar.Yaw - strRadar.AperturaAzimut/2;
-anguloMaxBusca = strRadar.Yaw + strRadar.AperturaAzimut/2;
+Yaw = Yaw*180/pi;
 
-if angulo_en_rango(tmpAz,anguloMinBusca,anguloMaxBusca)
+% Mover target a la posicion del radar
+
+posTargetAux = strTarget.pos - posRadar;
+
+% Calcular azimuth y elevacion
+
+[azTarget, elTarget, ~] = cart2sph(posTargetAux(1),posTargetAux(2),posTargetAux(3));
+
+anguloMinBusca = Yaw - strRadar.AperturaAzimut/2;
+anguloMaxBusca = Yaw + strRadar.AperturaAzimut/2;
+
+if angulo_en_rango(azTarget*180/pi,anguloMinBusca,anguloMaxBusca)
     
     % Calcula a distância entre o radar e o alvo
     dist = norm(posRadar(:) - strTarget.pos);

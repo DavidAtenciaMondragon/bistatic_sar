@@ -1,5 +1,18 @@
 function [strRadarTx, strRadarRx] = calculateCoverageBistatic(strRadarTx,strRadarRx)
 
+switch strRadarTx.tipoCobertura
+    case 'stripmat'
+        disp("------------------------------------------------------------------------------------")
+        disp("Cobertura em modo STRIPMAT, angulo de apontamento do radar configurado por parametro")
+        disp("------------------------------------------------------------------------------------")
+    case 'spotlight'
+        disp("----------------------------------------------------------------------------------------------------------------------------")
+        disp("Cobertura em modo SPOTLIGHT, angulo de apontamento do radar calculado internamente (sempre apontando num ponto de referencia")
+        disp("----------------------------------------------------------------------------------------------------------------------------")
+    otherwise
+        error('Tipo de cobertura não reconhecido')
+end
+
 posInicialCartTx = convertCordinatesToCartesian(strRadarTx.posInicial,strRadarTx.tipoTrajetoria);
 posInicialCartRx = convertCordinatesToCartesian(strRadarRx.posInicial,strRadarRx.tipoTrajetoria);
 

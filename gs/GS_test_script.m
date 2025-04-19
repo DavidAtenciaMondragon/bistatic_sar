@@ -1,6 +1,6 @@
 clc
 clear
-close all
+% close all
 
 addpath(genpath('src'))
 addpath(genpath(strcat('..',filesep,'tools')))
@@ -101,8 +101,8 @@ for i = 1:strSystem.NumeroPulsos
         posRadarTx(:, i) = convertCordinatesToCartesian(posRadarTx(:,i),strRadarTx.tipoTrajetoria);
         posRadarRx(:, i) = convertCordinatesToCartesian(posRadarRx(:,i),strRadarRx.tipoTrajetoria);
         
-        distTx = calculateDistIfAzim(posRadarTx(:, i),strTarget(j), strRadarTx);
-        distRx = calculateDistIfAzim(posRadarRx(:, i),strTarget(j), strRadarRx);
+        distTx = calculateDistIfAzim(posRadarTx(:, i),strTarget(j), strRadarTx, strSystem);
+        distRx = calculateDistIfAzim(posRadarRx(:, i),strTarget(j), strRadarRx, strSystem);
         
         if ~isempty(distTx) & ~isempty(distRx)
             
