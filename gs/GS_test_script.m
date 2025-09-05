@@ -1,6 +1,6 @@
 clc
 clear
-% close all
+close all
 
 addpath(genpath('src'))
 addpath(genpath(strcat('..',filesep,'tools')))

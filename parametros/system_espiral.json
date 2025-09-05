@@ -1,0 +1,16 @@
+{"system":[
+    {
+        "VelocidadeLuz": 3e8,
+        "IndiceMaximo":  256,
+        "NumeroPulsos":  10000,
+        "PlotarGrafico": true,
+        "RefGeografico": [0,0,0],
+        "xMin":          -150,
+        "xMax":          150,
+        "yMin":          -150,
+        "yMax":          150,
+        "discGrid":      1,
+        "ratioUp":       2
+    }
+]
+}
