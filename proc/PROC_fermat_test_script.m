@@ -26,14 +26,14 @@ strTarget  = targetJSON.target; clear targetJSON;
 x0  = strTarget.pos(1);
 y0  = strTarget.pos(2);
 
-xy0 = strTarget.pos(1); dxy = 0.04;  lxy = 1.2;
-z0  = strTarget.pos(3);  dz = 0.08;   lz = 1.2;
+xy0 = strTarget.pos(1); dxy = 0.04;  lxy = 0.8;
+z0  = strTarget.pos(3);  dz = 0.08;   lz = 0.8;
 
 %% Calculate params
 strRadarTx.lamb = strSystem.VelocidadeLuz/strRadarTx.FreqPortadora; % Comprimento de onda
 
 %% Load 
-load('simulated_raw_david_fermat.mat')
+load('simulated_raw_fermat.mat')
 
 ratio         = 4;
 [Nrng,Nazm]   = size(rootData);
@@ -44,10 +44,6 @@ rcompData     = rcompData.';
 clear rootData
 
 %% Run
-strGridToProc.xAxis = strGridToProc.xAxis(1:15:end);
-strGridToProc.yAxis = strGridToProc.yAxis(1:15:end);
-strGridToProc.zAxis = strGridToProc.zAxis(1:10:end);
-
 outputData = proc_fermat_run(rcompData,strRadarTx,strGridToProc,strEnvironment,strDEM,Tx,Rx);
 
 %% Save outputData

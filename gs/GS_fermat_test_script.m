@@ -50,7 +50,6 @@ name_DEM = 'assets\DEM_1x1km_Res30m_Lat-3_6160_Lon-80_4552.tif';
 
 Z_DEM = Z_DEM * 0;
 
-
 %% Plot del escenario 
 figure
 hold on 
@@ -67,11 +66,11 @@ legend("Tx","Rx","Target")
 
 %% Create grid 
 x0 = strTarget.pos(1);
-y0 = strTarget.pos(2);  dxy = 0.04;  lxy = 1.0;
-z0 = strTarget.pos(3);   dz = 0.08;   lz = 1.0;
+y0 = strTarget.pos(2);  dxy = 0.04;  lx = 0.12; ly = 0.16;
+z0 = strTarget.pos(3);   dz = 0.08;  lz = 0.4;
 
-xAxis = x0-lxy:dxy:x0+lxy;
-yAxis = y0-lxy:dxy:y0+lxy;
+xAxis = x0-lx:dxy:x0+lx;
+yAxis = y0-ly:dxy:y0+ly;
 zAxis = z0-lz:dz:z0+lz;
 
 [X,Y,Z] = meshgrid(xAxis,yAxis,zAxis);
@@ -82,7 +81,6 @@ strGridToProc.zAxis = zAxis;
 
 %% Create raw data
 
-n = 3;
 c = strSystem.VelocidadeLuz;
 threshold = 1e-10;
 
@@ -98,10 +96,16 @@ n2 = 4;
 strEnvironment.n1 = n1;
 strEnvironment.n2 = n2;
 
-%Preproc 
+% Save environment
+save(strcat("data",filesep,"strEnvironment.mat"),'strEnvironment');
+
+% Preproc 
 strDEM.X_vec = X_DEM(1,:);
 strDEM.Y_vec = Y_DEM(:,1).';
 strDEM.Z_DEM = double(Z_DEM);
+
+% Save strDEM (.mat)
+save(strcat("data",filesep,"strDEM.mat"),'strDEM');
 
 Tx = [PxT.', PyT.', PzT.'];
 Rx = [PxR.', PyR.', PzR.'];
@@ -109,12 +113,17 @@ Rx = [PxR.', PyR.', PzR.'];
 P  = strTarget.pos.'; 
 
 bPlotVerbose = false;
-f_interp     = 5;
+f_interp     = 7;
 
-% [strReflexao, strRefraccoes] = calculaSlantRangeFermat(strDEM,Tx,Rx,P,n1,n2,bPlotVerbose);
 tic
-[strReflexao, strRefraccoes] = calculaSlantRangeFermat_eff(strDEM,Tx,Rx,P,n1,n2,f_interp);
+[strReflexao, strRefraccoes] = calculaSlantRangeFermat(strDEM,Tx,Rx,P,n1,n2,bPlotVerbose);
 toc
+
+% [strReflexao_opt, strRefraccoes_opt] = calculaSlantRangeFermat_optimized(strDEM, Tx, Rx, P, n1, n2, bPlotVerbose, f_interp);
+% 
+% % tic
+% [strReflexao, strRefraccoes] = calculaSlantRangeFermat_eff(strDEM,Tx,Rx,P,n1,n2,f_interp);
+% toc
 
 %% Create ranges 
 
@@ -131,10 +140,10 @@ r2Rx = r2Rx.';
 
 %% Create raw matrix 
 
-t       = (1/c)*(r1Tx + n*r2Tx + r1Rx + n*r2Rx);
+t       = (1/c)*(n1*r1Tx + n2*r2Tx + n1*r1Rx + n2*r2Rx);
 rngBin  = 1 + round(t*strRadarRx.fs);
 
-phi     = -(2*pi/strRadarTx.lamb)*(r1Tx + n*r2Tx + r1Rx + n*r2Rx);
+phi     = -(2*pi/strRadarTx.lamb)*(n1*r1Tx + n2*r2Tx + n1*r1Rx + n2*r2Rx);
 
 auxData = zeros(strSystem.IndiceMaximo,length(PxT));
 IND     = sub2ind(size(auxData),rngBin,1:length(PxT));
@@ -155,13 +164,25 @@ rawData      = ifft(fft(auxData).*fft(reference));
 
 rootData = ifft(fft(rawData).*conj(fft(reference)));
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% dados_brutos = readBinary("rootData_complex.bin");
+% rootData = dados_brutos.';
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 % Save at proc folder 
 
-dir = strcat("..",filesep,"proc",filesep,"simulated_raw_david_fermat.mat");
+dir = strcat("..",filesep,"proc",filesep,"simulated_raw_fermat.mat");
 
 save(dir, 'rootData', 'strDEM', 'strEnvironment', 'Tx', 'Rx', 'strGridToProc');
 
-dir = strcat("..",filesep,"proc",filesep,"simulated_raw_david.mat");
+dir = strcat("..",filesep,"proc",filesep,"simulated_raw_snell.mat");
 
-save(dir, 'rootData', 'x0', 'y0', 'z0', 'n', 'PxT', 'PyT', 'PzT', 'PxR', 'PyR', 'PzR', 'X', 'Y', 'Z');
+save(dir, 'rootData', 'x0', 'y0', 'z0', 'n2', 'PxT', 'PyT', 'PzT', 'PxR', 'PyR', 'PzR', 'X', 'Y', 'Z');
+
+% for i = 1:length(PxT)
+%     % Show t, rngBin and phi for each position (one line)
+%     fprintf('Position %d: t = %.6f ns, rngBin = %d, phi = %.4f rad\n', i, t(i)*1e9, rngBin(i), phi(i));
+% end
 

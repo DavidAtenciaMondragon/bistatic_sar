@@ -124,7 +124,22 @@ for i = 1:num_pares
         fprintf('Verificación Snell (Ida): n1*sin(θ1)=%.3f | n2*sin(θ2)=%.3f\n', n1*sind(ang_inc_refr_deg), n2*sind(ang_refr_QP_deg));
         fprintf('Verificación Snell (Vuelta): n2*sin(θ2)=%.3f | n1*sin(θ1)=%.3f\n\n', n2*sind(ang_inc_PR_deg), n1*sind(ang_refr_RRx_deg));
     end
+    
+%     disp(strcat("[",num2str(Tx_actual),"] -> Refract: ","[",num2str(Qrefract),"] Target: ","[",num2str(P),"]"))
+%     disp(strcat("[",num2str(Rx_actual),"] -> Refract: ","[",num2str(R_PRx),"] Target: ","[",num2str(P),"]"))
+%     
+%     r1Tx = sqrt(sum((Tx_actual - Qrefract).^2));
+%     r2Tx = sqrt(sum((P - Qrefract).^2));
+%     r1Rx = sqrt(sum((Rx_actual - Qrefract).^2));
+%     r2Rx = sqrt(sum((P - R_PRx).^2));
+%     
+%     disp(strcat("Ranges: r1Tx=",num2str(r1Tx),", r2Tx=",num2str(r2Tx),", r1Rx=",num2str(r1Rx),", r2Rx=",num2str(r2Rx)))
+%     disp("----------------------------------------------------------------------------------")
+
+
 end
+
+disp("----------------------------------------------------------------------------------")
 
 %% Almacenamiento de Resultados en las Estructuras
 strReflexao.P_reflex = P_REF;

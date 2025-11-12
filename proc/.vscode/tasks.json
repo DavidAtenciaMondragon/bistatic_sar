@@ -1,0 +1,16 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run MATLAB Script",
+			"type": "shell",
+			"command": "matlab",
+			"args": [
+				"-batch",
+				"cd('c:\\Users\\David\\Desktop\\Doctorado\\bistatic_sar\\proc'); PROC_fermat_test_script"
+			],
+			"problemMatcher": [],
+			"group": "build"
+		}
+	]
+}

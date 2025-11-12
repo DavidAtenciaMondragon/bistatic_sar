@@ -62,8 +62,8 @@ legend("Tx","Rx","Target")
 
 %% Create grid 
 x0 = strTarget.pos(1);
-y0 = strTarget.pos(2);  dxy = 0.04;  lxy = 1.0;
-z0  = strTarget.pos(3);  dz = 0.08;   lz = 1.0;
+y0 = strTarget.pos(2);  dxy = 0.04;  lxy = 0.12;
+z0  = strTarget.pos(3);  dz = 0.08;   lz = 0.24;
 
 xAxis = x0-lxy:dxy:x0+lxy;
 yAxis = y0-lxy:dxy:y0+lxy;
@@ -85,6 +85,17 @@ tic
 [r1Tx,r2Tx,angTxTg] = calculateSlantRange(PxT,PyT,PzT,x0,y0,z0,c,n,threshold);
 [r1Rx,r2Rx,angTgRx] = calculateSlantRange(PxR,PyR,PzR,x0,y0,z0,c,n,threshold);
 toc
+
+figure
+hold on 
+plot(r1Tx)
+plot(r2Tx)
+plot(r1Rx)
+plot(r2Rx)
+legend("r1Tx","r2Tx","r1Rx","r2Rx")
+grid minor
+hold off 
+
 
 r_p_amplitudeTxTg   = calculateCoefReflex(angTxTg,1,n);
 r_p_amplitudeTgRx   = calculateCoefReflex(angTxTg,1,n);
@@ -118,6 +129,6 @@ rootData = ifft(fft(rawData).*conj(fft(reference)));
 
 % Save at proc folder 
 
-dir = strcat("..",filesep,"proc",filesep,"simulated_raw_david.mat");
+dir = strcat("..",filesep,"proc",filesep,"simulated_raw_snell.mat");
 
 save(dir, 'rootData', 'x0', 'y0', 'z0', 'n', 'PxT', 'PyT', 'PzT', 'PxR', 'PyR', 'PzR', 'X', 'Y', 'Z');
