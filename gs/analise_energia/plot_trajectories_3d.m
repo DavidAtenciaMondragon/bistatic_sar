@@ -9,8 +9,8 @@ function plot_trajectories_3d(pos_Tx, pos_Rx, pos_Rx_otimizado, strVolumEmAnalis
     %   strDEM - Estructura con datos del terreno
     %   strEnvironment - Estructura con parámetros del environment
     
-    figure('Name', 'Análisis de Trayectorias y Puntos de Irradiación', 'Position', [100, 100, 1400, 900]);
-    
+    figure()
+    set(gcf, 'Position', get(0, 'Screensize'));
     hold on;
     
     % 1. TRAYECTORIAS DEL TRANSMISOR

@@ -1,4 +1,4 @@
-function E_promedio = calcular_energia_promedio(Rx, Tx, P_targets, n1, n2)
+function E_promedio = calcular_energia_promedio(Rx, Tx, P_targets, n1, n2, varargin)
     % CALCULAR_ENERGIA_PROMEDIO - Versión optimizada con SOLO polarización TM
     % 
     % Esta función calcula la energía promedio considerando únicamente 
@@ -10,6 +10,32 @@ function E_promedio = calcular_energia_promedio(Rx, Tx, P_targets, n1, n2)
     % Tx: vector [x, y, z] posición del transmisor  
     % P_targets: matriz Nx3 con posiciones [x, y, z] de los objetivos
     % n1, n2: índices de refracción
+    %
+    % Parámetros opcionales (como pares nombre-valor):
+    % 'Pt'     - Potencia transmitida [W] (default: 1)
+    % 'Gt'     - Ganancia antena transmisora [lineal] (default: 1)
+    % 'Gr'     - Ganancia antena receptora [lineal] (default: 1)
+    % 'lambda' - Longitud de onda [m] (default: 0.03 para 10 GHz)
+    % 'sigma'  - RCS de los objetivos [m²] (default: 0.01)
+    % 'useFullRadarEq' - true para ecuación completa de radar (default: false)
+
+    % Parsear parámetros opcionales
+    p = inputParser;
+    addParameter(p, 'Pt', 1, @isnumeric);           % Potencia transmitida [W]
+    addParameter(p, 'Gt', 1, @isnumeric);           % Ganancia Tx [lineal]
+    addParameter(p, 'Gr', 1, @isnumeric);           % Ganancia Rx [lineal]
+    addParameter(p, 'lambda', 0.03, @isnumeric);    % Longitud de onda [m]
+    addParameter(p, 'sigma', 0.01, @isnumeric);     % RCS [m²]
+    addParameter(p, 'useFullRadarEq', false, @islogical);
+    parse(p, varargin{:});
+    
+    % Extraer parámetros
+    Pt = p.Results.Pt;
+    Gt = p.Results.Gt;
+    Gr = p.Results.Gr;
+    lambda = p.Results.lambda;
+    sigma = p.Results.sigma;
+    useFullRadarEq = p.Results.useFullRadarEq;
     
     % Validar entrada
     if length(Rx) ~= 3 || length(Tx) ~= 3
@@ -104,8 +130,20 @@ function E_promedio = calcular_energia_promedio(Rx, Tx, P_targets, n1, n2)
     % 5. CÁLCULO FINAL DE ENERGÍA VECTORIZADO - SOLO TM
     valid_ranges = (R_ida > 1e-6) & (R_vuelta > 1e-6);
     energia_i = zeros(num_targets, 1);
-    energia_i(valid_ranges) = (T12_TM(valid_ranges) .* T21_TM(valid_ranges)) ./ ...
-                              (R_ida(valid_ranges).^2 .* R_vuelta(valid_ranges).^2);
+    
+    if useFullRadarEq
+        % ECUACIÓN COMPLETA DE RADAR BIESTÁTICO:
+        % Pr = (Pt * Gt * Gr * lambda^2 * sigma * T12 * T21) / ((4*pi)^3 * R1^2 * R2^2)
+        % donde R1 = R_ida, R2 = R_vuelta
+        factor_radar = (Pt * Gt * Gr * lambda^2 * sigma) / ((4*pi)^3);
+        energia_i(valid_ranges) = factor_radar * ...
+                                  (T12_TM(valid_ranges) .* T21_TM(valid_ranges)) ./ ...
+                                  (R_ida(valid_ranges).^2 .* R_vuelta(valid_ranges).^2);
+    else
+        % CÁLCULO SIMPLIFICADO (solo factores geométricos y de transmisión)
+        energia_i(valid_ranges) = (T12_TM(valid_ranges) .* T21_TM(valid_ranges)) ./ ...
+                                  (R_ida(valid_ranges).^2 .* R_vuelta(valid_ranges).^2);
+    end
     
     E_promedio = sum(energia_i) / num_targets;
 end

@@ -121,8 +121,9 @@ end
 plot_trajectories_3d(pos_Tx, pos_Rx, pos_Rx_otimizado, strVolumEmAnalise, strDEM, strEnvironment);
 
 %% GRÁFICO DE ENERGÍA COMPARATIVA
-figure('Position', [100, 100, 1200, 800]);
 
+figure();
+set(gcf, 'Position', get(0, 'Screensize'));
 % Subplot 1: Energías absolutas
 subplot(2,2,1);
 hold on 
