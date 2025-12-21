@@ -95,6 +95,18 @@ n1 = 1;
 n2 = 4;
 c = physconst("lightspeed");
 
+% Parámetros del radar para ecuación completa
+Pt = 20;             % Potencia transmitida [W]
+Gt = 30;             % Ganancia antena transmisora [dB] -> 1000 lineal
+Gr = 25;             % Ganancia antena receptora [dB] -> 316 lineal
+frequencia = 0.4e9;  % Frecuencia [Hz] - 10 GHz
+lambda = c / frequencia;  % Longitud de onda [m]
+sigma = 0.01;        % RCS típica para objetivos pequeños [m²]
+
+% Convertir ganancias de dB a lineal
+Gt_linear = 10^(Gt/10);
+Gr_linear = 10^(Gr/10);
+
 %% Run
 Rx_inicial_xy = [mean(X_filtrado), mean(Y_filtrado)];
 Rx_previo_xy = Rx_inicial_xy; % Para memoria de posición anterior
@@ -144,32 +156,111 @@ for i = 1:length(PxT)
     Tx   = [PxT(i), PyT(i), PzT(i)];
     P_targets = [X_filtrado, Y_filtrado, Z_filtrado];
     
-    % Calcular posición especular ideal
-    Rx_especular_xy = calcular_posicion_especular(Tx, P_targets, Rx_z);
+    % Definir área de búsqueda restringida
+    x_busqueda_min = -150;  % Límite mínimo en X
+    x_busqueda_max =  150;  % Límite máximo en X
+    y_busqueda_min = -150;  % Límite mínimo en Y
+    y_busqueda_max =  150;  % Límite máximo en Y
     
+
     % Punto inicial inteligente
     if i > 1
         % Para puntos posteriores, usar la posición anterior como inicial 
         Rx_inicial_restringido = Rx_previo_xy;
     else
+        % Calcular posición especular ideal
+        Rx_especular_xy = calcular_posicion_especular(Tx, P_targets, Rx_z);
+    
         % Para el primer punto, usar posición especular o centro del grid
-        Rx_inicial_restringido = [mean(X_filtrado), mean(Y_filtrado)];
+%         Rx_inicial_restringido = [mean(X_filtrado), mean(Y_filtrado)];
+        Rx_inicial_restringido = Rx_especular_xy;
     end
     
-    % Usar optimización libre (RECOMENDADO tras diagnóstico)
-    objective_function = @(rx_xy) -calcular_energia_promedio([rx_xy, Rx_z], Tx, P_targets, n1, n2);
+    % ALTERNATIVA: Si fmincon no funciona bien, usar fminsearch con verificación de límites
+    usar_fmincon = false;  % Cambiar a false - fmincon tiene problemas de convergencia
     
-    % Configurar opciones del optimizador para mayor precisión
-    options = optimset('TolX', 1e-8, 'TolFun', 1e-12, 'MaxIter', 1000, 'MaxFunEvals', 2000, 'Display', 'off');
-    
-    % Llamada al optimizador con punto inicial geométricamente inteligente
-    [optimal_Rx_xy, max_energia_neg] = fminsearch(objective_function, Rx_inicial_restringido, options);
+    if usar_fmincon
+        % Asegurar que el punto inicial esté dentro de los límites
+        Rx_inicial_restringido(1) = max(x_busqueda_min, min(x_busqueda_max, Rx_inicial_restringido(1)));
+        Rx_inicial_restringido(2) = max(y_busqueda_min, min(y_busqueda_max, Rx_inicial_restringido(2)));
+        
+        % Usar optimización restringida con configuración más agresiva
+        objective_function = @(rx_xy) -calcular_energia_promedio([rx_xy, Rx_z], Tx, P_targets, n1, n2, ...
+            'Pt', Pt, 'Gt', Gt_linear, 'Gr', Gr_linear, 'lambda', lambda, 'sigma', sigma, 'useFullRadarEq', true);
+        
+        % Configurar límites para fmincon
+        lb = [x_busqueda_min, y_busqueda_min];  % Lower bounds
+        ub = [x_busqueda_max, y_busqueda_max];  % Upper bounds
+        
+        % Configurar opciones más agresivas para forzar búsqueda
+        options = optimoptions('fmincon', 'TolX', 1e-3, 'TolFun', 1e-6, ...
+                              'MaxIterations', 200, 'MaxFunctionEvaluations', 400, ...
+                              'Display', 'off', 'Algorithm', 'interior-point', ...
+                              'StepTolerance', 1e-3, 'OptimalityTolerance', 1e-3, ...
+                              'FiniteDifferenceStepSize', 1e-3);
+        
+        % Guardar punto inicial para diagnóstico
+        punto_inicial = Rx_inicial_restringido;
+        
+        % Llamada al optimizador restringido
+        [optimal_Rx_xy, max_energia_neg, exitflag, output] = fmincon(objective_function, Rx_inicial_restringido, ...
+                                                  [], [], [], [], lb, ub, [], options);
+        
+        % Diagnóstico de la optimización
+        movimiento = norm(optimal_Rx_xy - punto_inicial);
+        if movimiento < 1.0  % Si se movió menos de 1 metro
+            fprintf('  ADVERTENCIA Punto %d: Movimiento mínimo (%.2fm) desde inicial [%.1f,%.1f] -> [%.1f,%.1f]\n', ...
+                    i, movimiento, punto_inicial(1), punto_inicial(2), optimal_Rx_xy(1), optimal_Rx_xy(2));
+            fprintf('  ExitFlag: %d, Iteraciones: %d, FunEvals: %d\n', exitflag, output.iterations, output.funcCount);
+        end
+    else
+        % RECOMENDADO: Usar fminsearch original (más robusto) con múltiples puntos iniciales
+        objective_function = @(rx_xy) -calcular_energia_promedio([rx_xy, Rx_z], Tx, P_targets, n1, n2, ...
+            'Pt', Pt, 'Gt', Gt_linear, 'Gr', Gr_linear, 'lambda', lambda, 'sigma', sigma, 'useFullRadarEq', true);
+        
+        % Probar múltiples puntos iniciales para evitar mínimos locales
+        puntos_iniciales = [Rx_inicial_restringido; 
+                           [0, 0]; 
+                           [50, 50]; 
+                           [-50, -50]; 
+                           [100, 0]; 
+                           [0, 100]];
+        
+        mejor_energia = inf;
+        mejor_solucion = Rx_inicial_restringido;
+        
+        options = optimset('TolX', 1e-4, 'TolFun', 1e-6, 'MaxIter', 300, 'MaxFunEvals', 600, 'Display', 'off');
+        
+        for j = 1:size(puntos_iniciales, 1)
+            [temp_sol, temp_energia] = fminsearch(objective_function, puntos_iniciales(j,:), options);
+            if temp_energia < mejor_energia
+                mejor_energia = temp_energia;
+                mejor_solucion = temp_sol;
+            end
+        end
+        
+        optimal_Rx_xy = mejor_solucion;
+        
+        % Verificar si la solución está dentro de los límites (información)
+        if optimal_Rx_xy(1) < x_busqueda_min || optimal_Rx_xy(1) > x_busqueda_max || ...
+           optimal_Rx_xy(2) < y_busqueda_min || optimal_Rx_xy(2) > y_busqueda_max
+            fprintf('  INFO Punto %d: Solución fuera de límites [%.1f,%.1f]\n', i, optimal_Rx_xy(1), optimal_Rx_xy(2));
+        end
+        
+        movimiento = norm(optimal_Rx_xy - Rx_inicial_restringido);
+        fprintf('  Punto %d: Movimiento desde inicial: %.1fm -> [%.1f,%.1f]\n', ...
+                i, movimiento, optimal_Rx_xy(1), optimal_Rx_xy(2));
+    end
     
     % Reconstruir la posición 3D óptima del receptor
     optimal_Rx = [optimal_Rx_xy, Rx_z];
     
-    % Calcular la energía promedio final con la posición óptima
-    energia_promedio = calcular_energia_promedio(optimal_Rx, Tx, P_targets, n1, n2);
+    % Calcular ganancias de antena considerando patrón de radiación
+    [Gt_ajustado, Gr_ajustado] = calcular_ganancias_antena(Tx, optimal_Rx, P_targets, 70, 20);
+    
+    % Calcular la energía promedio final con la posición óptima (ecuación completa de radar)
+    energia_promedio = calcular_energia_promedio(optimal_Rx, Tx, P_targets, n1, n2, ...
+        'Pt', Pt, 'Gt', Gt_linear, 'Gr', Gr_linear, 'lambda', lambda, 'sigma', sigma, 'useFullRadarEq', true);
     
     % Calcular distancia a la posición inicial para el log  
     distancia_inicial = norm(optimal_Rx_xy - Rx_inicial_restringido);
